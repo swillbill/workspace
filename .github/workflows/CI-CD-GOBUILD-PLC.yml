@@ -1,0 +1,226 @@
+name: Platform Configuration Migration
+run-name: Platform Configuration - ${{ inputs.sourceEnv }} -> ${{ inputs.targetEnv }}
+
+on:
+    workflow_dispatch:
+      inputs:
+        formNames:
+          type: string
+          description: 'Comma separated bundle list'
+          required: true
+        sourceEnv:
+          description: 'Source Environment'
+          required: true
+          type: choice
+          default: 'DEV'
+          options:
+            - DEV
+            - QA
+            - REF
+            - STG
+            - DEVGOV
+            - QAGOV
+            - REFGOV
+            - STL
+            - STP
+        targetEnv:
+          description: 'Target Environment'
+          required: true
+          type: choice
+          default: 'DEV'
+          options:
+            - DEV
+            - QA
+            - REF
+            - STG
+            - DEVGOV
+            - QAGOV
+            - REFGOV
+            - STL
+            - STP
+        sourceTenantID:
+          description: 'Source Tenant ID'
+          required: true
+          type: string
+        targetTenantID:
+          description: 'Target Tenant ID'
+          required: true
+          type: string
+        sourceUserName:
+          description: 'Source User Name'
+          required: true
+          type: string
+        targetUserName:
+          description: 'Target User Name'
+          required: true
+          type: string
+        sourceDBPassword:
+          description: 'Source Database Password'
+          required: true
+          type: string
+        targetDBPassword:
+          description: 'Target Database Password'
+          required: true
+          type: string
+
+env:
+  MONGO_CONN_DEV: ${{ secrets.MONGO_CONN_DEV }}
+  MONGO_CONN_REF: ${{ secrets.MONGO_CONN_REF }}
+  MONGO_CONN_QA: ${{ secrets.MONGO_CONN_QA }}
+  MONGO_CONN_STG: ${{ secrets.MONGO_CONN_STG }}
+  MONGO_CONN_STL: ${{ secrets.MONGO_CONN_STL }}
+  MONGO_CONN_STP: ${{ secrets.MONGO_CONN_STP }}
+  MONGO_CONN_DEVGOV: ${{ secrets.MONGO_CONN_DEVGOV }}
+  MONGO_CONN_QAGOV: ${{ secrets.MONGO_CONN_QAGOV }}
+  MONGO_CONN_REFGOV: ${{ secrets.MONGO_CONN_REFGOV }}
+  MONGO_CONN_DEMOGOV: ${{ secrets.MONGO_CONN_DEMOGOV }}
+
+jobs:
+    source_plc_commercial:
+        if:  ${{inputs.sourceEnv == 'dev' || inputs.sourceEnv == 'qa' || inputs.sourceEnv == 'ref'}}
+        runs-on: 
+            group: "DEV-RUNNERS"
+            labels: [linux]
+        steps:
+        - name: Login to Azure Commercial 
+          uses: azure/login@v2
+          with:
+            environment: AzureCloud
+            auth-type: IDENTITY
+            client-id: bb07f43b-1339-474e-8679-7412cfcc5e17
+            tenant-id: ab9ac16a-a8d4-48fb-bc22-3b0f03f477dd
+            subscription-id: 000117e3-d9eb-4084-8233-e90cd78d6149
+
+        - name: Checkout code
+          uses: actions/checkout@v3
+      
+        - name: Set up Go
+          uses: actions/setup-go@v4
+          with:
+            go-version: '1.22'  
+            
+        - name: Get Migration Bundle
+          run: |
+            echo "${{ inputs.formNames }}" | tr ',' '\n' > Scripts/Go/plcbundleNameList.txt
+            cat Scripts/Go/plcbundleNameList.txt    
+
+        - name: Run Platform Configuration Migration Script
+          run: | 
+            cd Scripts/Go
+            go run cmd/main.go -sourceEnv "${{ inputs.sourceEnv }}" -targetEnv "${{ inputs.targetEnv }}" -sourceTenantID "${{ inputs.sourceTenantID }}" -targetTenantID "${{ inputs.targetTenantID }}" -file plcbundleNameList.txt -sourceUserName "${{ inputs.sourceUserName }}" -sourceDBPassword "${{ inputs.sourceDBPassword }}" -targetUserName "${{ inputs.targetUserName }}" -targetDBPassword "${{ inputs.targetDBPassword }}" -workflow plc
+    
+        - name: Archive Source Documents
+          uses: actions/upload-artifact@v4
+          with:
+            name: PLCSourceDocuments
+            path: Scripts/Go/plcsourcecursordatasection*.json
+
+    source_plc_gov:
+        if:  ${{inputs.sourceEnv == 'stg' || inputs.sourceEnv == 'stl' || inputs.sourceEnv == 'stp' || inputs.sourceEnv == 'devgov' || inputs.sourceEnv == 'qagov' || inputs.sourceEnv == 'refgov'}}
+        runs-on: 
+            group: "QA-GOV-RUNNERS"
+            labels: [linux]
+        steps:
+        - name: Login to Azure Gov Cloud
+          uses: azure/login@v2
+          with:
+            environment: AzureUSGovernment
+            auth-type: IDENTITY
+            client-id: c994e4d5-b8da-41a5-9c11-fdd4c26b0d07
+            tenant-id: 2ae74f46-6dd7-479b-a890-3531b082e84b
+            subscription-id: f29a274d-6d84-4e30-a384-b86b8c4a2da9
+
+        - name: Checkout code
+          uses: actions/checkout@v3
+        
+        - name: Set up Go
+          uses: actions/setup-go@v4
+          with:
+            go-version: '1.22' 
+            
+        - name: Get Migration Bundle
+          run: |
+            echo "${{ inputs.formNames }}" | tr ',' '\n' > Scripts/Go/plcbundleNameList.txt
+            cat Scripts/Go/plcbundleNameList.txt 
+
+        - name: Run Platform Configuration Migration Script
+          run: | 
+            cd Scripts/Go
+            go run cmd/main.go  -sourceEnv "${{ inputs.sourceEnv }}" -targetEnv "${{ inputs.targetEnv }}" -sourceTenantID "${{ inputs.sourceTenantID }}" -targetTenantID "${{ inputs.targetTenantID }}" -file plcbundleNameList.txt -sourceUserName "${{ inputs.sourceUserName }}" -sourceDBPassword "${{ inputs.sourceDBPassword }}" -targetUserName "${{ inputs.targetUserName }}" -targetDBPassword "${{ inputs.targetDBPassword }}" -workflow plc
+    
+        - name: Archive Source Documents
+          uses: actions/upload-artifact@v4
+          with:
+            name: PLCSourceDocuments
+            path: Scripts/Go/plcsourcecursordatasection*.json
+
+    target_plc_commercial:
+        if:  ${{always() && (inputs.targetEnv == 'dev' || inputs.targetEnv == 'qa' || inputs.targetEnv == 'ref') && (needs.source_plc_commercial.result == 'success'|| needs.source_plc_gov.result == 'success')}}
+        needs: [source_plc_commercial, source_plc_gov]
+        runs-on: 
+            group: "DEV-RUNNERS"
+            labels: [linux]
+        steps:
+        - name: Login to Azure Commercial 
+          uses: azure/login@v2
+          with:
+            environment: AzureCloud
+            auth-type: IDENTITY
+            client-id: bb07f43b-1339-474e-8679-7412cfcc5e17
+            tenant-id: ab9ac16a-a8d4-48fb-bc22-3b0f03f477dd
+            subscription-id: 000117e3-d9eb-4084-8233-e90cd78d6149
+
+        - name: Checkout code
+          uses: actions/checkout@v3
+        
+        - name: Set up Go
+          uses: actions/setup-go@v4
+          with:
+            go-version: '1.22'
+        
+        - name: Get Cursor Data Results
+          uses: actions/download-artifact@v4
+          with:
+            name: PLCSourceDocuments
+            path: Scripts/Go   
+
+        - name: Run Platform Configuration Migration Script
+          run: | 
+            cd Scripts/Go
+            go run cmd/main.go -targetEnv "${{ inputs.targetEnv }}" -sourceTenantID "${{ inputs.sourceTenantID }}" -targetTenantID "${{ inputs.targetTenantID }}" -file plcbundleNameList.txt -sourceUserName "${{ inputs.sourceUserName }}" -sourceDBPassword "${{ inputs.sourceDBPassword }}" -targetUserName "${{ inputs.targetUserName }}" -targetDBPassword "${{ inputs.targetDBPassword }}" -workflow plc
+
+    target_active_dictionary_gov:
+        if:  ${{always() && (inputs.targetEnv == 'stg' || inputs.targetEnv == 'stl' || inputs.targetEnv == 'stp' || inputs.targetEnv == 'devgov' || inputs.targetEnv == 'qagov' || inputs.targetEnv == 'refgov') && (needs.source_plc_gov.result == 'success' || needs.source_plc_commercial.result == 'success')}}
+        needs: [source_plc_gov, source_plc_commercial]
+        runs-on: 
+            group: "QA-GOV-RUNNERS"
+            labels: [linux]
+        steps:
+        - name: Login to Azure Commercial 
+          uses: azure/login@v2
+          with:
+            environment: AzureUSGovernment
+            auth-type: IDENTITY
+            client-id: c994e4d5-b8da-41a5-9c11-fdd4c26b0d07
+            tenant-id: 2ae74f46-6dd7-479b-a890-3531b082e84b
+            subscription-id: f29a274d-6d84-4e30-a384-b86b8c4a2da9
+    
+        - name: Checkout code
+          uses: actions/checkout@v3
+        
+        - name: Set up Go
+          uses: actions/setup-go@v4
+          with:
+            go-version: '1.22'
+        
+        - name: Get Cursor Data Results
+          uses: actions/download-artifact@v4
+          with:
+            name: PLCSourceDocuments
+            path: Scripts/Go       
+    
+        - name: Run Platform Configuration Migration Script
+          run: | 
+            cd Scripts/Go
+            go run cmd/main.go -targetEnv "${{ inputs.targetEnv }}" -sourceTenantID "${{ inputs.sourceTenantID }}" -targetTenantID "${{ inputs.targetTenantID }}" -file plcbundleNameList.txt -sourceUserName "${{ inputs.sourceUserName }}" -sourceDBPassword "${{ inputs.sourceDBPassword }}" -targetUserName "${{ inputs.targetUserName }}" -targetDBPassword "${{ inputs.targetDBPassword }}" -workflow plc
+

@@ -1,0 +1,46 @@
+name: Check File Size for Migration
+run-name: Check File Size for Migration - ${{ inputs.project_name }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_name:
+        description: 'Name of the TFS project (e.g., Products or CustomTools)'
+        required: true
+
+jobs:
+  Check-File-Size:
+    runs-on:
+      group: "RPE-RUNNERS"
+      labels: [linux]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up TFS credentials
+        run: |
+          echo "TFS_USERNAME=${{ secrets.TFS_USERNAME }}" >> $GITHUB_ENV
+          echo "TFS_PAT=${{ secrets.TFS_PASS }}" >> $GITHUB_ENV
+          echo "MIGRATION_PAT=${{ secrets.MIGRATION_PAT }}" >> $GITHUB_ENV
+
+      - name: Install expect
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y expect
+
+      - name: Run File Size Script
+        run: |
+            cd Scripts/Bash
+            chmod +x get_file_size.sh
+            ./get_file_size.sh "${{ inputs.project_name }}"
+        env:
+          TFS_USERNAME: ${{ secrets.TFS_USERNAME }}
+          TFS_PASS: ${{ secrets.TFS_PASS }}
+          MIGRATION_PAT: ${{ secrets.MIGRATION_PAT }}
+
+      - name: Upload large file list artifact
+        uses: actions/upload-artifact@v4
+        with:
+            name: ${{ inputs.project_name }} Large File List
+            path: Scripts/Bash/files_over_100MB.txt

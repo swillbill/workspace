@@ -1,0 +1,84 @@
+name: Migrate TFS Repository to GitHub - Specific Branches
+run-name: Migrate TFS Repository to GitHub - ${{ inputs.repo_name }} - ${{ inputs.branch_list }} branch
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo_name:
+        description: 'Name of the repository to migrate'
+        required: false
+      step_size:
+        description: 'Batch size of pushes'
+        required: true
+        default: '1000'
+      project:
+        type: choice
+        description: 'Project name'
+        required: true
+        options:
+          - 'Products'
+          - 'CustomTools'
+          - 'LogHelper'
+          - 'POC Field Updates'
+          - 'Tools'
+          - 'Sandbox'
+      branch_list:
+        description: 'Comma-separated list of branches to migrate'
+        required: false
+
+jobs:
+    migrate-specific-branches:
+        runs-on:
+          group: "RPE-RUNNERS"
+          labels: [linux]
+        timeout-minutes: 4320
+        steps:
+          - name: Checkout Repository
+            uses: actions/checkout@v3
+    
+          - name: Set up TFS credentials
+            run: |
+              echo "TFS_USERNAME=${{ secrets.TFS_USERNAME }}" >> $GITHUB_ENV
+              echo "TFS_PAT=${{ secrets.TFS_PASS }}" >> $GITHUB_ENV
+              echo "MIGRATION_PAT=${{ secrets.MIGRATION_PAT }}" >> $GITHUB_ENV
+    
+          - name: Create Branch List File
+            run: |
+              echo "${{ inputs.branch_list }}" | tr ',' '\n' > Scripts/Bash/branch_list.txt
+              echo "Branches to migrate:"
+              cat Scripts/Bash/branch_list.txt
+    
+          - name: Install Git LFS
+            run: |
+              sudo apt-get update
+              sudo apt-get install -y git-lfs
+              git lfs install
+
+          - name: Debug - Check branch list file in Scripts/Bash
+            run: |
+                pwd
+                ls -l
+                ls -l Scripts/Bash/
+                cat Scripts/Bash/branch_list.txt || echo "branch_list.txt does not exist"
+
+          - name: Run Migration Script for Specific Branches
+            run: |
+                cd Scripts/Bash
+                chmod +x migrate_specific_branches.sh
+                ./migrate_specific_branches.sh "${{ inputs.repo_name }}" "${{ inputs.step_size }}" "${{ inputs.project }}" "branch_list.txt"
+            env:
+                TFS_USERNAME: ${{ secrets.TFS_USERNAME }}
+                TFS_PASS: ${{ secrets.TFS_PASS }}
+                MIGRATION_PAT: ${{ secrets.MIGRATION_PAT }}
+            
+          - name: Cleanup - Remove Cloned Files and Temporary Files
+            run: |
+              echo "Cleaning up cloned repository files and temporary files..."
+              REPO_PATH="$(pwd)/Scripts/Bash/${{ inputs.repo_name }}.git"
+              if [ -d "$REPO_PATH" ]; then
+                echo "Removing cloned repository at $REPO_PATH"
+                rm -rf "$REPO_PATH"
+              else
+                echo "No cloned repository found at $REPO_PATH"
+              fi
+              echo "Cleanup completed!"
