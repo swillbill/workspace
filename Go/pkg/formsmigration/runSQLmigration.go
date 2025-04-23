@@ -14,43 +14,43 @@ func GetMigrationSQLConfig(targetEnv string, targetUserName string, targetDBPass
 
 	var sqlconfigs = map[string]Config{
 		"dev": {
-			ConnectionString: fmt.Sprintf("Server=tcp:dev-revx-managed-sql-instance.public.5f8be3c9b863.database.windows.net,3342;Persist Security Info=False;User ID=%s;Password=%s;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;", targetUserName, targetDBPassword),
+			ConnectionString: fmt.Sprintf("<redacted>", targetUserName, targetDBPassword),
 			Database:         "NgPlatform",
 		},
 		"qa": {
-			ConnectionString: fmt.Sprintf("Server=tcp:qa-revx-managed-sql-instance.public.e5d2b6f8aec1.database.windows.net,3342;Persist Security Info=False;User ID=%s;Password=%s;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;", targetUserName, targetDBPassword),
+			ConnectionString: fmt.Sprintf("<redacted>", targetUserName, targetDBPassword),
 			Database:         "NgPlatform",
 		},
 		"ref": {
-			ConnectionString: fmt.Sprintf("Server=tcp:rfsb-revx-managed-sql-instance.public.96a031c3633f.database.windows.net,3342;Persist Security Info=False;User ID=%s;Password=%s;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;", targetUserName, targetDBPassword),
+			ConnectionString: fmt.Sprintf("<redacted>", targetUserName, targetDBPassword),
 			Database:         "ref_NgPlatform",
 		},
 		"stg": {
-			ConnectionString: fmt.Sprintf("Server=tcp:revx-va-stg-smi.public.76b6315c2934.database.usgovcloudapi.net,3342;Persist Security Info=False;User ID=%s;Password=%s;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;", targetUserName, targetDBPassword),
+			ConnectionString: fmt.Sprintf("<redacted>", targetUserName, targetDBPassword),
 			Database:         "NgPlatform",
 		},
 		"stl": {
-			ConnectionString: fmt.Sprintf("Server=tcp:va-01-stl-smi.public.f190e0b62306.database.usgovcloudapi.net,3342;Persist Security Info=False;User ID=%s;Password=%s;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;", targetUserName, targetDBPassword),
+			ConnectionString: fmt.Sprintf("<redacted>", targetUserName, targetDBPassword),
 			Database:         "NgPlatform",
 		},
 		"stp": {
-			ConnectionString: fmt.Sprintf("Server=tcp:va-01-stp-smi.public.0ee6689d0f92.database.usgovcloudapi.net,3342;Persist Security Info=False;User ID=%s;Password=%s;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;", targetUserName, targetDBPassword),
+			ConnectionString: fmt.Sprintf("<redacted>", targetUserName, targetDBPassword),
 			Database:         "NgPlatform",
 		},
 		"devgov": {
-			ConnectionString: fmt.Sprintf("Server=tcp:va-02-dev-smi.public.cea638793093.database.usgovcloudapi.net,3342;Persist Security Info=False;User ID=%s;Password=%s;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;", targetUserName, targetDBPassword),
+			ConnectionString: fmt.Sprintf("<redacted>", targetUserName, targetDBPassword),
 			Database:         "NgPlatform",
 		},
 		"qagov": {
-			ConnectionString: fmt.Sprintf("Server=tcp:va-qal-smi.public.d88afbb0de5d.database.usgovcloudapi.net,3342;Persist Security Info=False;User ID=%s;Password=%s;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;", targetUserName, targetDBPassword),
+			ConnectionString: fmt.Sprintf("<redacted>", targetUserName, targetDBPassword),
 			Database:         "NgPlatform",
 		},
 		"refgov": {
-			ConnectionString: fmt.Sprintf("Server=tcp:va-ref-smi.886a9d260a75.database.usgovcloudapi.net,1433;Persist Security Info=False;User ID=%s;Password=%s;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;", targetUserName, targetDBPassword),
+			ConnectionString: fmt.Sprintf("<redacted>", targetUserName, targetDBPassword),
 			Database:         "NgPlatform",
 		},
 		"demogov": {
-			ConnectionString: fmt.Sprintf("Server=tcp:va-demo-smi.public.6498609a439c.database.usgovcloudapi.net,3342;Persist Security Info=False;User ID=%s;Password=%s;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;", targetUserName, targetDBPassword),
+			ConnectionString: fmt.Sprintf("<redacted>", targetUserName, targetDBPassword),
 			Database:         "NgPlatform",
 		},
 	}
